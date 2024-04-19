@@ -1,4 +1,11 @@
-import {type BaseOptions, init, sendTestRun} from '@allegoria/test-reporter-base';
+import {join} from 'path';
+import {
+  type BaseOptions,
+  init,
+  sendTestRun,
+  getPackageVersion,
+  getVersionFromPackageJson,
+} from '@allegoria/test-reporter-base';
 import type {Config, Reporter, TestContext, AggregatedResult} from '@jest/reporters';
 import type {Test, TestCaseResult} from '@jest/test-result';
 import type {Circus} from '@jest/types';
@@ -17,7 +24,14 @@ export default class AllegoriaReporter implements Reporter {
     this.enabled = options?.enabled ?? true;
     this.globalConfig = globalConfig;
     if (!this.enabled) return;
-    init(options);
+    init({
+      ...options,
+      runner: {name: 'jest', version: getPackageVersion('jest')},
+      reporter: {
+        name: '@allegoria/jest-reporter',
+        version: getVersionFromPackageJson(join(__dirname, '../package.json')),
+      },
+    });
   }
 
   onTestCaseStart(test: Test, testCase: Circus.TestCaseStartInfo): void {

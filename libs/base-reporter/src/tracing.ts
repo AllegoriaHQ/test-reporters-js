@@ -13,7 +13,10 @@ import {
   type IdGenerator,
   type Tracer,
 } from '@opentelemetry/sdk-trace-base';
-import {SEMRESATTRS_PROCESS_RUNTIME_NAME} from '@opentelemetry/semantic-conventions';
+import {
+  SEMRESATTRS_PROCESS_RUNTIME_NAME,
+  SEMRESATTRS_PROCESS_RUNTIME_VERSION,
+} from '@opentelemetry/semantic-conventions';
 import {getCiMetadata} from './ci';
 import {getOptions} from './utils';
 
@@ -45,7 +48,12 @@ export function getIdGenerator(): IdGenerator {
   return idGenerator;
 }
 
-export function initTracing() {
+export interface RuntimeAttributes {
+  runner: {name: string; version?: string};
+  reporter: {name: string; version?: string};
+}
+
+export function initTracing(attributes: RuntimeAttributes) {
   tracer = undefined;
   provider = undefined;
   const options = getOptions();
@@ -57,7 +65,12 @@ export function initTracing() {
   provider = new BasicTracerProvider({
     idGenerator,
     resource: new Resource({
-      [SEMRESATTRS_PROCESS_RUNTIME_NAME]: 'jest',
+      [SEMRESATTRS_PROCESS_RUNTIME_NAME]: 'nodejs',
+      [SEMRESATTRS_PROCESS_RUNTIME_VERSION]: process.versions.node,
+      'test_runner.name': attributes.runner.name,
+      'test_runner.version': attributes.runner.version,
+      'test_runner.reporter.name': attributes.reporter.name,
+      'test_runner.reporter.version': attributes.reporter.version,
       ...resourceAttributes,
     }),
   });

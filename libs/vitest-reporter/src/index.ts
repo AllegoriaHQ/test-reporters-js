@@ -1,4 +1,11 @@
-import {init, type BaseOptions, sendTestRun} from '@allegoria/test-reporter-base';
+import {join} from 'node:path';
+import {
+  init,
+  type BaseOptions,
+  sendTestRun,
+  getVersionFromPackageJson,
+  getPackageVersion,
+} from '@allegoria/test-reporter-base';
 import type {Reporter, File, Vitest} from 'vitest';
 import {createDataFromFile} from './result';
 
@@ -15,7 +22,14 @@ export default class AllegoriaReporter implements Reporter {
     this.start = Date.now();
     this.enabled = options?.enabled ?? true;
     if (!this.enabled) return;
-    init(options);
+    init({
+      ...options,
+      runner: {name: 'vitest', version: getPackageVersion('vitest')},
+      reporter: {
+        name: '@allegoria/vitest-reporter',
+        version: getVersionFromPackageJson(join(__dirname, '../package.json')),
+      },
+    });
   }
 
   onInit(context: Vitest) {

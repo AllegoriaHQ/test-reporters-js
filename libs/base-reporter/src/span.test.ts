@@ -4,8 +4,8 @@ import {describe, it, beforeEach, expect, vi} from 'vitest';
 import {genTestRun, genTestSuite, genNonExecutedTestCase, genCompletedTestCase} from '../test';
 import * as ci from './ci';
 import {createTestRunSpan} from './span';
+import type {RuntimeAttributes} from './tracing';
 import {init} from './index';
-
 interface TestSpan {
   name: string;
   startTime: [number, number];
@@ -18,9 +18,14 @@ interface TestSpan {
   };
 }
 
+const testRunnerAttrs: RuntimeAttributes = {
+  runner: {name: 'test-runner', version: '1.0.0'},
+  reporter: {name: 'test-reporter', version: '1.0.0'},
+};
+
 describe('createTestRunSpan', () => {
   beforeEach(() => {
-    init();
+    init(testRunnerAttrs);
   });
 
   it('Non executed spans should take the start time of the run and have 0 duration', () => {
@@ -41,7 +46,7 @@ describe('createTestRunSpan', () => {
   });
 
   it('should set the root span time relatively to the baseTimestamp (in the past)', () => {
-    init({baseTimeStamp: '2009-11-04T03:22:43.000Z'});
+    init({...testRunnerAttrs, baseTimeStamp: '2009-11-04T03:22:43.000Z'});
     const runStart = new Date('2024-03-25T17:35:17.000Z');
     const runEnd = new Date('2024-03-25T17:35:17.500Z');
     const testCase = genNonExecutedTestCase();
@@ -60,7 +65,7 @@ describe('createTestRunSpan', () => {
   });
 
   it('should set the root span time relatively to the baseTimestamp (in the future)', () => {
-    init({baseTimeStamp: '2032-07-14T13:04:55.000Z'});
+    init({...testRunnerAttrs, baseTimeStamp: '2032-07-14T13:04:55.000Z'});
     const runStart = new Date('2024-03-25T17:35:17.000Z');
     const runEnd = new Date('2024-03-25T17:35:17.500Z');
     const testCase = genNonExecutedTestCase();
@@ -79,7 +84,7 @@ describe('createTestRunSpan', () => {
   });
 
   it('should set the test span time relatively to the baseTimestamp', () => {
-    init({baseTimeStamp: '2009-11-04T03:22:43.000Z'});
+    init({...testRunnerAttrs, baseTimeStamp: '2009-11-04T03:22:43.000Z'});
 
     const testCase = genCompletedTestCase({
       start: new Date('2024-03-25T17:35:18.255Z'),
@@ -149,7 +154,7 @@ describe('createTestRunSpan', () => {
       suites: [genTestSuite({tests: [genNonExecutedTestCase(), genCompletedTestCase()]})],
     });
 
-    init();
+    init(testRunnerAttrs);
     const spans = createTestRunSpan(testRun) as unknown as TestSpan[];
     expect(spans).toHaveLength(4);
 
@@ -169,7 +174,7 @@ describe('createTestRunSpan', () => {
       suites: [genTestSuite({tests: [genNonExecutedTestCase(), genCompletedTestCase()]})],
     });
 
-    init();
+    init(testRunnerAttrs);
     const spans = createTestRunSpan(testRun) as unknown as TestSpan[];
     expect(spans).toHaveLength(4);
 
